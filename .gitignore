@@ -1,3 +1,23 @@
-venv/ 
-__pycache__/ 
-*.pyc 
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+backend/.venv/
+
+# Node/frontend
+node_modules/
+frontend/node_modules/
+dist/
+build/
+frontend/dist/
+frontend/build/
+
+# Local environment files
+.env
+.env.*

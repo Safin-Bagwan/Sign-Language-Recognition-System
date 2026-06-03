@@ -9,11 +9,12 @@ from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras import backend as K
+from paths import DATASETS_DIR, GESTURES_DIR, MODEL_PATH, ensure_directories
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def get_image_size():
-    img_files = glob('gestures/*/*.jpg')
+    img_files = glob(str(GESTURES_DIR / "*" / "*.jpg"))
     if not img_files:
         return (50, 50)
     img = cv2.imread(img_files[0], 0)
@@ -37,22 +38,23 @@ def cnn_model(num_of_classes):
     
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     
-    filepath="cnn_model_keras2.h5"
+    filepath = str(MODEL_PATH)
     checkpoint1 = ModelCheckpoint(filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint1]
     return model, callbacks_list
 
 def train():
+    ensure_directories()
     print("DEBUG: Loading data...")
     try:
-        with open("train_images", "rb") as f:
+        with open(DATASETS_DIR / "train_images", "rb") as f:
             train_images = np.array(pickle.load(f))
-        with open("train_labels", "rb") as f:
+        with open(DATASETS_DIR / "train_labels", "rb") as f:
             train_labels = np.array(pickle.load(f), dtype=np.int32)
 
-        with open("val_images", "rb") as f:
+        with open(DATASETS_DIR / "val_images", "rb") as f:
             val_images = np.array(pickle.load(f))
-        with open("val_labels", "rb") as f:
+        with open(DATASETS_DIR / "val_labels", "rb") as f:
             val_labels = np.array(pickle.load(f), dtype=np.int32)
     except FileNotFoundError:
         print("ERROR: Training data files not found. Run load_images.py first.")
@@ -78,8 +80,8 @@ def train():
     
     scores = model.evaluate(val_images, val_labels, verbose=0)
     print("CNN Accuracy: %.2f%%" % (scores[1]*100))
-    model.save('cnn_model_keras2.h5')
-    print("SUCCESS: Model saved as 'cnn_model_keras2.h5'")
+    model.save(str(MODEL_PATH))
+    print(f"SUCCESS: Model saved as '{MODEL_PATH}'")
 
 if __name__ == "__main__":
     train()

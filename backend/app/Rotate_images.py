@@ -1,8 +1,10 @@
 import cv2
 import os
+from paths import GESTURES_DIR, ensure_directories
 
 def flip_images():
-    gest_folder = "gestures"
+    ensure_directories()
+    gest_folder = GESTURES_DIR
     if not os.path.exists(gest_folder):
         print(f"ERROR: {gest_folder} directory not found.")
         return

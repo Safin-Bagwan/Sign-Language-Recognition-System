@@ -8,6 +8,7 @@ import pyttsx3
 import mediapipe as mp
 from tensorflow.keras.models import load_model
 from threading import Thread
+from paths import DATABASE_PATH, MODEL_PATH, ensure_directories
 
 # MediaPipe Setup
 mp_hands = mp.solutions.hands
@@ -24,11 +25,12 @@ except Exception as e:
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Load the trained model
-if os.path.exists('cnn_model_keras2.h5'):
-    model = load_model('cnn_model_keras2.h5')
+ensure_directories()
+if MODEL_PATH.exists():
+    model = load_model(str(MODEL_PATH))
     print("SUCCESS: Model loaded.")
 else:
-    print("ERROR: Model 'cnn_model_keras2.h5' not found.")
+    print(f"ERROR: Model '{MODEL_PATH}' not found.")
     exit()
 
 image_x, image_y = 50, 50
@@ -71,7 +73,7 @@ def keras_predict(model, image):
 
 def get_pred_text_from_db(pred_class):
     try:
-        conn = sqlite3.connect("gesture_db.db")
+        conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.execute("SELECT g_name FROM gesture WHERE g_id=?", (pred_class,))
         for row in cursor:
             conn.close()
@@ -91,12 +93,23 @@ def get_pred_from_contour(contour, thresh):
     pred_probab, pred_class = keras_predict(model, save_img)
     return get_pred_text_from_db(pred_class) if pred_probab*100 > 70 else ""
 
+import subprocess
+
 def say_text(text):
-    if not is_voice_on or engine is None: return
+    if not is_voice_on or not text.strip(): return
+    
+    # Use PowerShell for native Windows speech - extremely reliable
+    print(f"[SPEECH] -> {text}")
     try:
-        engine.say(text)
-        engine.runAndWait()
-    except: pass
+        # Sanitize text for PowerShell (remove quotes)
+        safe_text = text.replace("'", "").replace('"', "")
+        cmd = f"Add-Type -AssemblyName System.Speech; $speak = New-Object System.Speech.Synthesis.SpeechSynthesizer; $speak.Speak('{safe_text}')"
+        subprocess.Popen(["powershell", "-Command", cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        print(f"SPEECH ERROR: {e}")
+
+# Initial test
+say_text("System ready")
 
 def get_img_contour_thresh(img):
     img = cv2.flip(img, 1)
@@ -108,17 +121,21 @@ def get_img_contour_thresh(img):
 
 def text_mode(cam):
     text, word, count_same_frame = "", "", 0
+    last_added_text = ""
 
     def mouse_click(event, x_mouse, y_mouse, flags, param):
-        nonlocal word
+        nonlocal word, last_added_text
         if event == cv2.EVENT_LBUTTONDOWN:
-            # The blackboard starts at x=640 (img width) in the hstack result
-            # Button is at (1000, 400) to (1150, 450) on blackboard
+            # CLEAR button: (1000, 400) to (1150, 450)
             if 640 + 1000 < x_mouse < 640 + 1150 and 400 < y_mouse < 450:
                 word = ""
+                last_added_text = ""
+            # SPEAK button: (800, 400) to (950, 450)
+            if 640 + 800 < x_mouse < 640 + 950 and 400 < y_mouse < 450:
+                say_text(word)
 
-    cv2.namedWindow("Sign Language Interpreter")
-    cv2.setMouseCallback("Sign Language Interpreter", mouse_click)
+    cv2.namedWindow("Sign Language Recognition System")
+    cv2.setMouseCallback("Sign Language Recognition System", mouse_click)
 
     while True:
         ret, img = cam.read()
@@ -129,31 +146,65 @@ def text_mode(cam):
             contour = max(contours, key = cv2.contourArea)
             if cv2.contourArea(contour) > 1000:
                 text = get_pred_from_contour(contour, thresh)
+                if text == "":
+                    last_added_text = ""
+                    count_same_frame = 0
+                
                 if old_text == text: count_same_frame += 1
                 else: count_same_frame = 0
+                
                 if count_same_frame > 20:
-                    word += text
-                    Thread(target=say_text, args=(text,)).start()
+                    if len(text) > 1: # It's a phrase (e.g., "Hello", "Good Morning")
+                        if text != last_added_text:
+                            # Add phrase to the written sentence with space
+                            if len(word) > 0 and word[-1] != " ": word += " "
+                            word += text + " "
+                            
+                            # Speak the phrase immediately
+                            say_text(text)
+                            last_added_text = text
+                    else: # It's a single letter
+                        if text != last_added_text:
+                            word += text
+                            last_added_text = text
+                    
                     count_same_frame = 0
+            else:
+                text = ""
+                last_added_text = ""
+                count_same_frame = 0
+        else:
+            text = ""
+            last_added_text = ""
+            count_same_frame = 0
 
         blackboard = np.zeros((480, 1200, 3), dtype=np.uint8)
-        cv2.putText(blackboard, "MediaPipe Mode", (150, 50), cv2.FONT_HERSHEY_TRIPLEX, 1.5, (255, 0,0))
+        cv2.putText(blackboard, "Sign Language Recognition System", (30, 50), cv2.FONT_HERSHEY_TRIPLEX, 1.2, (255, 0, 0))
         cv2.putText(blackboard, "Predicted: " + text, (30, 100), cv2.FONT_HERSHEY_TRIPLEX, 1, (255, 255, 0))
-        cv2.putText(blackboard, word, (30, 240), cv2.FONT_HERSHEY_TRIPLEX, 2, (255, 255, 255))
+        cv2.putText(blackboard, word, (30, 240), cv2.FONT_HERSHEY_TRIPLEX, 1.2, (255, 255, 255))
         
         # Draw Clear Button
         cv2.rectangle(blackboard, (1000, 400), (1150, 450), (255, 255, 255), -1)
         cv2.putText(blackboard, "CLEAR", (1020, 435), cv2.FONT_HERSHEY_TRIPLEX, 0.8, (0, 0, 0))
+        
+        # Draw Speak Button
+        cv2.rectangle(blackboard, (800, 400), (950, 450), (0, 255, 0), -1)
+        cv2.putText(blackboard, "SPEAK", (820, 435), cv2.FONT_HERSHEY_TRIPLEX, 0.8, (0, 0, 0))
 
         cv2.rectangle(img, (x,y), (x+w, y+h), (0,255,0), 2)
         res = np.hstack((img, blackboard))
-        cv2.imshow("Sign Language Interpreter", res)
+        cv2.imshow("Sign Language Recognition System", res)
         
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'): 
             break
         elif key == ord('c'):
             word = ""
+            last_added_text = ""
+        elif key == ord('s'):
+            say_text(word)
+        elif key == ord(' '):
+            word += " "
     return 0
 
 def recognize():

@@ -5,11 +5,14 @@ import random
 from sklearn.utils import shuffle
 import pickle
 import os
+from pathlib import Path
+from paths import DATASETS_DIR, GESTURES_DIR, ensure_directories
 
 def pickle_images_labels():
+    ensure_directories()
     images_labels = []
     # Find all .jpg files inside the gestures directory
-    images = glob("gestures/*/*.jpg")
+    images = glob(str(GESTURES_DIR / "*" / "*.jpg"))
     
     if not images:
         print("CRITICAL ERROR: No images found in the 'gestures' folder. Did you capture any?")
@@ -20,7 +23,7 @@ def pickle_images_labels():
     
     for image in images:
         # Extract label from the parent folder name (e.g., 'gestures/1/100.jpg' -> '1')
-        label = image.split(os.sep)[-2]
+        label = Path(image).parent.name
         img = cv2.imread(image, 0)
         
         if img is None:
@@ -47,23 +50,23 @@ if images_labels:
     print(f"DEBUG: Splitting: {train_end} Train, {test_end - train_end} Test, {total_count - test_end} Val")
 
     # Save training set
-    with open("train_images", "wb") as f:
+    with open(DATASETS_DIR / "train_images", "wb") as f:
         pickle.dump(images[:train_end], f)
-    with open("train_labels", "wb") as f:
+    with open(DATASETS_DIR / "train_labels", "wb") as f:
         pickle.dump(labels[:train_end], f)
     print("SUCCESS: Saved training data.")
 
     # Save testing set
-    with open("test_images", "wb") as f:
+    with open(DATASETS_DIR / "test_images", "wb") as f:
         pickle.dump(images[train_end:test_end], f)
-    with open("test_labels", "wb") as f:
+    with open(DATASETS_DIR / "test_labels", "wb") as f:
         pickle.dump(labels[train_end:test_end], f)
     print("SUCCESS: Saved testing data.")
 
     # Save validation set
-    with open("val_images", "wb") as f:
+    with open(DATASETS_DIR / "val_images", "wb") as f:
         pickle.dump(images[test_end:], f)
-    with open("val_labels", "wb") as f:
+    with open(DATASETS_DIR / "val_labels", "wb") as f:
         pickle.dump(labels[test_end:], f)
     print("SUCCESS: Saved validation data.")
 else:

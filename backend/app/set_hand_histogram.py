@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pickle
+from paths import HISTOGRAM_PATH, ensure_directories
 
 def build_squares(img):
 	x, y, w, h = 420, 140, 10, 10
@@ -64,7 +65,8 @@ def get_hand_hist():
 		cv2.imshow("Set hand histogram", img)
 	cam.release()
 	cv2.destroyAllWindows()
-	with open("hist", "wb") as f:
+	ensure_directories()
+	with open(HISTOGRAM_PATH, "wb") as f:
 		pickle.dump(hist, f)
 
 

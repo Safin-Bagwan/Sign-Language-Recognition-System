@@ -4,15 +4,15 @@ import os
 import sqlite3
 import random
 import mediapipe as mp
+from paths import DATABASE_PATH, GESTURES_DIR, ensure_directories
 
 # Parameters
 image_x, image_y = 50, 50
 
 def init_create_folder_database():
-    if not os.path.exists("gestures"):
-        os.mkdir("gestures")
-    if not os.path.exists("gesture_db.db"):
-        conn = sqlite3.connect("gesture_db.db")
+    ensure_directories()
+    if not DATABASE_PATH.exists():
+        conn = sqlite3.connect(DATABASE_PATH)
         conn.execute("CREATE TABLE gesture ( g_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, g_name TEXT NOT NULL )")
         conn.commit()
         conn.close()
@@ -22,7 +22,7 @@ def create_folder(folder_name):
         os.mkdir(folder_name)
 
 def store_in_db(g_id, g_name):
-    conn = sqlite3.connect("gesture_db.db")
+    conn = sqlite3.connect(DATABASE_PATH)
     try:
         conn.execute("INSERT INTO gesture (g_id, g_name) VALUES (?, ?)", (g_id, g_name))
     except sqlite3.IntegrityError:
@@ -78,7 +78,8 @@ def store_images(g_id):
         return
 
     total_pics = 300
-    create_folder("gestures/" + str(g_id))
+    gesture_folder = GESTURES_DIR / str(g_id)
+    create_folder(gesture_folder)
     pic_no = 0
     flag_capture = False
 
@@ -117,7 +118,7 @@ def store_images(g_id):
                     save_img = cv2.flip(save_img, 1)
 
                 pic_no += 1
-                cv2.imwrite(f"gestures/{g_id}/{pic_no}.jpg", save_img)
+                cv2.imwrite(str(gesture_folder / f"{pic_no}.jpg"), save_img)
                 if pic_no % 50 == 0:
                     print(f"PROGRESS: {pic_no}/{total_pics} images saved.")
 
