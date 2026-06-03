@@ -7,6 +7,15 @@ This repository is organized as a full-stack project.
 ```text
 Sign-Language-Recognition-System/
 ├── backend/
+│   ├── app.py
+│   ├── routes/
+│   │   └── api.py
+│   ├── services/
+│   │   ├── recognition_service.py
+│   │   └── tts_service.py
+│   ├── utils/
+│   │   ├── paths.py
+│   │   └── responses.py
 │   ├── app/
 │   │   ├── create_gestures.py
 │   │   ├── load_images.py
@@ -28,15 +37,45 @@ Sign-Language-Recognition-System/
 │   │   └── gestures/
 │   ├── models/
 │   │   └── cnn_model_keras2.h5
+│   ├── static/
 │   ├── requirements.txt
 │   └── README.md
 └── frontend/
+    ├── index.html
+    ├── css/
+    │   └── style.css
+    ├── js/
+    │   ├── api.js
+    │   └── app.js
+    ├── assets/
+    │   └── images/
     └── README.md
 ```
 
 ## Parts
 
-- `backend/` contains the existing Python, OpenCV, MediaPipe, TensorFlow/Keras, SQLite, and text-to-speech code.
-- `frontend/` is reserved for the web UI that will be developed next.
+- `backend/` contains the existing Python scripts plus a Flask API that reuses the TensorFlow/Keras model, OpenCV webcam capture, MediaPipe hand tracking, SQLite gesture labels, and text-to-speech support.
+- `frontend/` contains the responsive web interface, recognition dashboard, Flask API integration, and fallback mock mode for demos when the backend is unavailable.
 
 See `backend/README.md` for backend setup and run commands.
+
+## Quick Start
+
+```bash
+backend\venv\Scripts\activate
+pip install -r backend\requirements.txt
+python -m backend.app
+```
+
+Open `http://127.0.0.1:5000` in your browser.
+
+## API Overview
+
+- `GET /api/health`
+- `POST /api/start-recognition`
+- `POST /api/stop-recognition`
+- `POST /api/predict`
+- `POST /api/text-to-speech`
+- `GET /api/stats`
+- `GET /api/history`
+- `POST /api/clear`

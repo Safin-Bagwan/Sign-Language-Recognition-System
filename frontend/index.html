@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Portfolio frontend for a Sign Language Recognition System powered by Python, TensorFlow/Keras, OpenCV, and MediaPipe."
+    />
+    <title>Sign Language Recognition System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <nav class="navbar" aria-label="Primary navigation">
+        <a class="brand" href="#top" aria-label="Sign Language Recognition System home">
+          <span class="brand-mark" aria-hidden="true">SL</span>
+          <span>SignVision AI</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-label="Toggle navigation"
+          aria-controls="primaryNav"
+          aria-expanded="false"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="nav-links" id="primaryNav">
+          <a href="#recognition">Recognition</a>
+          <a href="#speech">Speech</a>
+          <a href="#features">Features</a>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Landing page hero -->
+      <section class="hero section-pad">
+        <div class="hero-content reveal">
+          <p class="eyebrow">AI-powered assistive technology</p>
+          <h1>Sign Language Recognition System</h1>
+          <p class="hero-copy">
+            A computer vision system that recognizes hand gestures in real time and converts
+            them into readable text and speech using deep learning.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#recognition">Start Demo</a>
+            <a class="btn btn-secondary" href="#project-info">View Workflow</a>
+          </div>
+          <div class="hero-metrics" aria-label="Project highlights">
+            <div>
+              <strong>37+</strong>
+              <span>Gesture classes</span>
+            </div>
+            <div>
+              <strong>Real-time</strong>
+              <span>Webcam inference</span>
+            </div>
+            <div>
+              <strong>CNN</strong>
+              <span>Recognition model</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal">
+          <img
+            src="assets/images/hero-ai-sign-language.png"
+            alt="AI dashboard concept analyzing a hand gesture"
+          />
+          <div class="model-status" aria-label="Model status">
+            <span class="status-dot"></span>
+            Model ready
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Recognition Page -->
+      <section class="section-pad recognition-section" id="recognition">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Live recognition</p>
+          <h2>Webcam Gesture Recognition</h2>
+          <p>
+              The interface captures browser webcam frames and sends them to the Flask recognition
+              API for TensorFlow and MediaPipe processing.
+          </p>
+        </div>
+
+        <div class="app-alert info" id="appAlert" role="status" aria-live="polite" hidden></div>
+
+        <div class="recognition-grid">
+          <article class="panel video-panel reveal" aria-labelledby="video-title">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">Camera feed</p>
+                <h3 id="video-title">Recognition Workspace</h3>
+              </div>
+              <div class="status-stack">
+                <span class="live-badge" id="liveBadge">Idle</span>
+                <small id="connectionStatus" aria-live="polite">Checking API</small>
+              </div>
+            </div>
+
+            <div class="video-frame" id="videoFrame">
+              <video id="webcamVideo" autoplay muted playsinline hidden></video>
+              <div class="camera-placeholder" id="cameraPlaceholder">
+                <span class="camera-icon" aria-hidden="true"></span>
+                <p>Webcam preview</p>
+                <small>Press Start Recognition to launch a recognition session.</small>
+              </div>
+              <div class="tracking-box" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <button class="btn btn-primary" type="button" id="startBtn">Start Recognition</button>
+              <button class="btn btn-danger" type="button" id="stopBtn" disabled>Stop Recognition</button>
+              <button class="btn btn-secondary" type="button" id="clearBtn">Clear Text</button>
+            </div>
+          </article>
+
+          <aside class="panel prediction-panel reveal" aria-label="Recognition results">
+            <div class="result-card current-gesture">
+              <span class="result-label">Current Gesture</span>
+              <strong id="gestureLabel" aria-live="polite">Waiting</strong>
+            </div>
+            <div class="result-card">
+              <span class="result-label">Confidence Score</span>
+              <strong id="confidenceScore" aria-live="polite">0%</strong>
+              <div class="progress-bar" aria-hidden="true">
+                <span id="confidenceBar"></span>
+              </div>
+            </div>
+            <div class="result-card recognized-text">
+              <span class="result-label">Recognized Text</span>
+              <p id="recognizedText" aria-live="polite">No gestures detected yet.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Speech Output Section -->
+      <section class="section-pad speech-section" id="speech">
+        <div class="speech-grid">
+          <div class="section-heading reveal">
+            <p class="eyebrow">Speech output</p>
+            <h2>Generated Sentence</h2>
+            <p>
+              Recognized gestures are assembled into a sentence and can be spoken with the browser
+              speech engine or forwarded to a backend text-to-speech endpoint.
+            </p>
+          </div>
+
+          <article class="panel speech-panel reveal">
+            <div class="sentence-box is-empty" id="sentenceBox" aria-live="polite">
+              Your generated sentence will appear here.
+            </div>
+            <div class="speech-actions">
+              <button class="btn btn-primary" type="button" id="speakBtn" disabled>Text-to-Speech</button>
+              <span class="audio-status" id="audioStatus" role="status" aria-live="polite">
+                <span class="status-dot muted"></span>
+                Audio idle
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Project Information Section -->
+      <section class="section-pad info-section" id="project-info">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Project information</p>
+          <h2>Technology Stack & Workflow</h2>
+        </div>
+
+        <div class="info-grid">
+          <article class="panel reveal">
+            <h3>Technologies Used</h3>
+            <div class="tech-list" aria-label="Technologies used">
+              <span>Python</span>
+              <span>TensorFlow/Keras</span>
+              <span>OpenCV</span>
+              <span>MediaPipe</span>
+              <span>SQLite</span>
+            </div>
+          </article>
+
+          <article class="panel workflow-panel reveal" aria-label="Project workflow diagram placeholder">
+            <h3>Workflow</h3>
+            <div class="workflow">
+              <div>Webcam Input</div>
+              <div>Hand Tracking</div>
+              <div>CNN Prediction</div>
+              <div>Text Output</div>
+              <div>Speech Output</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section class="section-pad features-section" id="features">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Features</p>
+          <h2>Built for Practical Recognition</h2>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card reveal">
+            <span class="feature-icon">01</span>
+            <h3>Real-time gesture detection</h3>
+            <p>Processes webcam frames continuously for live hand gesture interpretation.</p>
+          </article>
+          <article class="feature-card reveal">
+            <span class="feature-icon">02</span>
+            <h3>Gesture-to-text conversion</h3>
+            <p>Converts recognized gesture classes into readable labels and sentence fragments.</p>
+          </article>
+          <article class="feature-card reveal">
+            <span class="feature-icon">03</span>
+            <h3>Text-to-speech conversion</h3>
+            <p>Prepared for speech playback through browser APIs or a backend TTS service.</p>
+          </article>
+          <article class="feature-card reveal">
+            <span class="feature-icon">04</span>
+            <h3>Deep learning recognition</h3>
+            <p>Designed around a trained CNN model using TensorFlow/Keras.</p>
+          </article>
+          <article class="feature-card reveal">
+            <span class="feature-icon">05</span>
+            <h3>User-friendly interface</h3>
+            <p>Dashboard-focused controls and results designed for final-year project evaluation.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- Statistics Dashboard -->
+      <section class="section-pad dashboard-section" id="dashboard">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Statistics dashboard</p>
+          <h2>Session Analytics</h2>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card reveal">
+            <span>Total gestures detected</span>
+            <strong id="totalGestures">0</strong>
+          </article>
+          <article class="stat-card reveal">
+            <span>Detection accuracy</span>
+            <strong id="accuracyStat">0%</strong>
+          </article>
+          <article class="stat-card reveal">
+            <span>Session duration</span>
+            <strong id="sessionDuration">00:00</strong>
+          </article>
+          <article class="stat-card reveal">
+            <span>Data source</span>
+            <strong id="backendMode">Backend</strong>
+          </article>
+        </div>
+
+        <article class="panel history-panel reveal">
+          <div class="panel-header">
+            <div>
+              <p class="panel-kicker">Recognition history</p>
+              <h3>Recent Predictions</h3>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption>
+                Recent recognition predictions from the current session
+              </caption>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Gesture</th>
+                  <th>Text</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="historyTable">
+                <tr class="empty-row">
+                  <td colspan="4">No recognition events yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+      <div>
+        <h2>Sign Language Recognition System</h2>
+        <p>Built as a professional AI/ML final-year project interface.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/Safin-Bagwan/Sign-Language-Recognition-System" target="_blank" rel="noreferrer">
+          GitHub Repository
+        </a>
+        <span>Author: Safin Bagwan</span>
+        <a href="mailto:contact@example.com">Contact</a>
+      </div>
+    </footer>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
