@@ -1,0 +1,9 @@
+{
+  "name": "sign-language-recognition-system",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/frontend_static.test.mjs"
+  }
+}
